@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>DRL Traffic Control — City X Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --brand:#00C47D;--brand2:#00A868;--branddim:rgba(0,196,125,0.12);
+  --accent:#F59E0B;--accdim:rgba(245,158,11,0.12);
+  --red:#EF4444;--reddim:rgba(239,68,68,0.12);
+  --blue:#3B82F6;--bluedim:rgba(59,130,246,0.12);
+  --bg:#0B0F1A;--bg2:#111827;--bg3:#1A2235;--bg4:#232F45;
+  --t1:#F0F4FF;--t2:#8B96B0;--t3:#4B5675;
+  --bd:rgba(255,255,255,0.07);--bd2:rgba(255,255,255,0.13);
+  --fh:'Space Mono',monospace;--fb:'Plus Jakarta Sans',sans-serif;
+  --rmd:8px;--rlg:14px;
+}
+html,body{height:100%;font-family:var(--fb);background:var(--bg);color:var(--t1);}
+
+/* ── SCREENS ── */
+#loginScreen,#dashScreen{display:none;}
+
+/* ── LOGIN ── */
+#loginScreen{
+  min-height:100vh;align-items:center;justify-content:center;
+  padding:2rem 1rem;
+  background:var(--bg);
+  background-image:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(0,196,125,0.18) 0%,transparent 70%);
+}
+.lcard{
+  background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rlg);
+  padding:2.5rem 2rem;width:100%;max-width:430px;
+  box-shadow:0 0 60px rgba(0,196,125,0.08);
+}
+.logo-row{display:flex;align-items:center;gap:12px;margin-bottom:2rem;}
+.logo-box{
+  width:46px;height:46px;background:var(--brand);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  box-shadow:0 0 20px rgba(0,196,125,0.4);
+}
+.logo-box svg{width:24px;height:24px;fill:#0B0F1A;}
+.logo-text h1{font-family:var(--fh);font-size:15px;font-weight:700;color:var(--t1);line-height:1.2;}
+.logo-text p{font-size:10px;color:var(--t2);margin-top:3px;letter-spacing:.04em;}
+.lh{font-family:var(--fh);font-size:20px;font-weight:700;color:var(--t1);margin-bottom:5px;}
+.ls{font-size:13px;color:var(--t2);margin-bottom:1.75rem;line-height:1.6;}
+.rtabs{display:flex;gap:4px;margin-bottom:1.5rem;background:var(--bg3);padding:4px;border-radius:var(--rmd);}
+.rtab{flex:1;padding:7px;font-size:11px;font-weight:600;border:none;border-radius:6px;cursor:pointer;background:transparent;color:var(--t2);font-family:var(--fb);transition:all .15s;letter-spacing:.03em;}
+.rtab.on{background:var(--brand);color:#0B0F1A;}
+.fg{margin-bottom:1rem;}
+.fl{display:block;font-size:10px;font-weight:600;color:var(--t2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em;}
+.fi{width:100%;padding:10px 13px;font-size:13px;font-family:var(--fb);background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--rmd);color:var(--t1);outline:none;transition:border-color .15s,box-shadow .15s;}
+.fi:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(0,196,125,.15);}
+.btn-p{width:100%;padding:11px;background:var(--brand);color:#0B0F1A;border:none;border-radius:var(--rmd);font-size:13px;font-weight:700;font-family:var(--fb);cursor:pointer;margin-top:.4rem;transition:all .15s;letter-spacing:.03em;}
+.btn-p:hover{background:var(--brand2);box-shadow:0 0 20px rgba(0,196,125,.35);}
+.btn-p:active{transform:scale(.98);}
+.errmsg{font-size:12px;color:var(--red);background:var(--reddim);border:1px solid rgba(239,68,68,.3);padding:9px 13px;border-radius:var(--rmd);margin-top:10px;}
+.lfoot{margin-top:1.5rem;text-align:center;font-size:11px;color:var(--t3);border-top:1px solid var(--bd);padding-top:1rem;line-height:1.9;font-family:var(--fh);}
+.lfoot strong{color:var(--t2);}
+
+/* ── DASHBOARD SHELL ── */
+#dashScreen{flex-direction:column;height:100vh;overflow:hidden;}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 22px;border-bottom:1px solid var(--bd);background:var(--bg2);flex-shrink:0;
+}
+.tbl{display:flex;align-items:center;gap:12px;}
+.tlogo{width:32px;height:32px;background:var(--brand);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.tlogo svg{width:16px;height:16px;fill:#0B0F1A;}
+.ttitle{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--t1);letter-spacing:.03em;}
+.rpill{font-size:10px;font-weight:600;padding:3px 9px;background:var(--branddim);border:1px solid rgba(0,196,125,.25);border-radius:20px;color:var(--brand);letter-spacing:.04em;}
+.tbr{display:flex;align-items:center;gap:10px;}
+.upill{display:flex;align-items:center;gap:8px;padding:5px 11px;background:var(--bg3);border:1px solid var(--bd);border-radius:20px;font-size:12px;color:var(--t2);}
+.uav{width:24px;height:24px;border-radius:50%;background:var(--brand);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#0B0F1A;font-family:var(--fh);}
+.btn-lo{padding:6px 14px;font-size:11px;font-weight:600;font-family:var(--fb);border:1px solid var(--bd2);background:transparent;color:var(--t2);border-radius:var(--rmd);cursor:pointer;transition:all .15s;letter-spacing:.03em;}
+.btn-lo:hover{background:var(--reddim);color:var(--red);border-color:rgba(239,68,68,.4);}
+.dbody{display:flex;flex:1;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:210px;border-right:1px solid var(--bd);background:var(--bg2);
+  padding:14px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex-shrink:0;
+}
+.ssec{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;padding:10px 10px 4px;margin-top:4px;font-family:var(--fh);}
+.sitem{
+  display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--rmd);
+  font-size:12px;color:var(--t2);cursor:pointer;transition:all .12s;border:none;
+  background:transparent;width:100%;text-align:left;font-family:var(--fb);font-weight:500;
+}
+.sitem svg{width:14px;height:14px;flex-shrink:0;fill:currentColor;}
+.sitem:hover{background:var(--bg3);color:var(--t1);}
+.sitem.on{background:var(--branddim);color:var(--brand);font-weight:600;border-left:2px solid var(--brand);padding-left:8px;}
+
+/* ── MAIN + PAGES ── */
+.main{flex:1;overflow-y:auto;background:var(--bg);}
+.pg{display:none;padding:24px;}
+.pgh{font-family:var(--fh);font-size:18px;font-weight:700;color:var(--t1);margin-bottom:4px;letter-spacing:.02em;}
+.pgs{font-size:12px;color:var(--t2);margin-bottom:22px;}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rlg);padding:18px;}
+.cardh{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em;font-family:var(--fh);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.scrd{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rmd);padding:16px 18px;}
+.slbl{font-size:10px;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;font-family:var(--fh);}
+.sval{font-size:28px;font-weight:700;color:var(--t1);font-family:var(--fh);}
+.sdlt{font-size:11px;color:var(--brand);margin-top:4px;}
+.sdlt.bad{color:var(--red);}
+.badge{font-size:10px;font-weight:600;padding:2px 9px;border-radius:10px;display:inline-block;font-family:var(--fh);}
+.bg{background:var(--branddim);color:var(--brand);}
+.br{background:var(--reddim);color:var(--red);}
+.bb{background:var(--bluedim);color:var(--blue);}
+.ba{background:var(--accdim);color:var(--accent);}
+
+/* table rows */
+.trow{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd);font-size:12px;color:var(--t1);}
+.trow:last-of-type{border-bottom:none;}
+.trow .label{color:var(--t2);font-size:11px;}
+
+/* ── COMPARISON BAR ── */
+.cmp-wrap{margin-top:6px;}
+.cmp-row{margin-bottom:14px;}
+.cmp-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--t2);margin-bottom:5px;}
+.cmp-bar-bg{height:10px;background:var(--bg3);border-radius:20px;overflow:hidden;margin-bottom:3px;}
+.cmp-bar{height:10px;border-radius:20px;transition:width 1s ease;}
+.cmp-note{font-size:10px;color:var(--t3);text-align:right;}
+
+/* ── SIMULATION FLOW ── */
+.flow-grid{display:flex;flex-direction:column;gap:12px;}
+.flow-phase{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rmd);padding:14px 16px;}
+.flow-phase-h{font-family:var(--fh);font-size:11px;font-weight:700;color:var(--brand);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;}
+.flow-steps{display:flex;flex-wrap:wrap;gap:8px;}
+.flow-step{background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rmd);padding:8px 12px;font-size:12px;color:var(--t1);flex:1;min-width:140px;}
+.flow-step .fsh{font-size:10px;color:var(--brand);font-weight:600;margin-bottom:3px;font-family:var(--fh);}
+
+/* ── DQN PARAMS ── */
+.param-table{width:100%;border-collapse:collapse;}
+.param-table th{text-align:left;padding:7px 12px;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);border-bottom:1px solid var(--bd2);font-weight:700;background:var(--bg3);font-family:var(--fh);}
+.param-table td{padding:9px 12px;border-bottom:1px solid var(--bd);color:var(--t1);vertical-align:top;font-size:12px;}
+.param-table tr:last-child td{border-bottom:none;}
+.param-table tbody tr:hover td{background:var(--bg3);}
+
+/* ── RESEARCH GAP ── */
+.gap-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.gap-card{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rmd);padding:14px;}
+.gap-card h4{font-family:var(--fh);font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;}
+.gap-card p{font-size:12px;color:var(--t2);line-height:1.7;}
+
+/* ── REFERENCES ── */
+.ref-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--bd);font-size:11px;}
+.ref-item:last-child{border-bottom:none;}
+.ref-num{color:var(--brand);font-weight:700;font-family:var(--fh);flex-shrink:0;width:24px;}
+.ref-text{color:var(--t2);line-height:1.6;}
+.ref-text em{color:var(--t1);}
+
+/* ── SIMULATION MONITOR ── */
+.monitor-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.monitor-card{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rmd);padding:14px;}
+.monitor-h{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;font-family:var(--fh);margin-bottom:10px;}
+.phase-lights{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.phase-light{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#0B0F1A;font-family:var(--fh);flex-shrink:0;}
+.ph-green{background:var(--brand);box-shadow:0 0 12px rgba(0,196,125,.5);}
+.ph-red{background:#374151;color:var(--t3);}
+.ph-amber{background:var(--accent);box-shadow:0 0 12px rgba(245,158,11,.4);}
+.metric-live{font-family:var(--fh);font-size:22px;font-weight:700;color:var(--brand);}
+.metric-unit{font-size:11px;color:var(--t2);margin-top:2px;}
+.progress-bar{height:6px;background:var(--bg4);border-radius:10px;margin-top:8px;overflow:hidden;}
+.progress-fill{height:6px;border-radius:10px;background:var(--brand);transition:width .8s ease;}
+
+/* ── SETTINGS ── */
+.srow{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--bd);gap:12px;}
+.srow:last-child{border-bottom:none;}
+.slb{font-size:13px;font-weight:500;color:var(--t1);}
+.ssb{font-size:11px;color:var(--t2);margin-top:2px;}
+.tog{width:38px;height:21px;background:var(--bg4);border-radius:20px;cursor:pointer;position:relative;transition:background .2s;border:none;flex-shrink:0;}
+.tog.on{background:var(--brand);}
+.tog::after{content:'';width:17px;height:17px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.4);}
+.tog.on::after{transform:translateX(17px);}
+.icfg{padding:7px 10px;font-size:12px;font-family:var(--fb);background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--rmd);color:var(--t1);outline:none;}
+.icfg:focus{border-color:var(--brand);}
+.btnsave{padding:8px 20px;background:var(--brand);color:#0B0F1A;border:none;border-radius:var(--rmd);font-size:12px;font-family:var(--fb);cursor:pointer;font-weight:700;margin-top:14px;transition:all .15s;}
+.btnsave:hover{background:var(--brand2);box-shadow:0 0 16px rgba(0,196,125,.3);}
+.sech{font-size:11px;font-weight:700;color:var(--t1);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--bd2);text-transform:uppercase;letter-spacing:.06em;font-family:var(--fh);}
+.savebar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--rmd);font-size:12px;margin-bottom:16px;}
+.savebar.ok{background:var(--branddim);color:var(--brand);border:1px solid rgba(0,196,125,.25);}
+.sdotg{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+/* profile */
+.phdr{display:flex;align-items:center;gap:16px;margin-bottom:20px;}
+.pav-big{width:60px;height:60px;border-radius:50%;background:var(--brand);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#0B0F1A;font-family:var(--fh);box-shadow:0 0 20px rgba(0,196,125,.3);}
+.pname{font-family:var(--fh);font-size:17px;font-weight:700;color:var(--t1);}
+.prole{font-size:12px;color:var(--t2);margin-top:3px;}
+.igrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.iitem label{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:5px;font-weight:700;font-family:var(--fh);}
+.ival{font-size:12px;color:var(--t1);padding:9px 12px;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rmd);}
+
+/* LOGOUT MODAL */
+#loModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.locard{background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rlg);padding:2rem;width:320px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.loico{width:48px;height:48px;background:var(--reddim);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto .9rem;border:1px solid rgba(239,68,68,.3);}
+.loico svg{width:22px;height:22px;fill:var(--red);}
+.locard h3{font-family:var(--fh);font-size:16px;font-weight:700;color:var(--t1);margin-bottom:7px;}
+.locard p{font-size:13px;color:var(--t2);margin-bottom:1.4rem;line-height:1.6;}
+.mbtns{display:flex;gap:8px;}
+.btncancel{flex:1;padding:10px;border:1px solid var(--bd2);background:transparent;color:var(--t2);border-radius:var(--rmd);font-size:12px;cursor:pointer;font-family:var(--fb);}
+.btncancel:hover{background:var(--bg3);}
+.btnconfirm{flex:1;padding:10px;background:var(--red);border:none;color:#fff;border-radius:var(--rmd);font-size:12px;cursor:pointer;font-family:var(--fb);font-weight:700;}
+.btnconfirm:hover{background:#dc2626;}
+
+/* scrollbar */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:10px;}
+
+@media(max-width:700px){.sidebar{display:none;}.g2{grid-template-columns:1fr;}.g3{grid-template-columns:1fr 1fr;}.g4{grid-template-columns:1fr 1fr;}.igrid{grid-template-columns:1fr;}.gap-cards{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="loginScreen">
+  <div class="lcard">
+    <div class="logo-row">
+      <div class="logo-box">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14l-4-4 1.41-1.41L11 13.17l6.59-6.59L19 8l-8 8z"/></svg>
+      </div>
+      <div class="logo-text">
+        <h1>DRL TRAFFIC CONTROL</h1>
+        <p>City X · Deep Reinforcement Learning System · BINUS University</p>
+      </div>
+    </div>
+    <p class="lh">System Access</p>
+    <p class="ls">Sign in to access the intelligent traffic signal optimization dashboard for City X (West Kalimantan).</p>
+    <div class="rtabs">
+      <button class="rtab on" id="rtResearcher" onclick="setRole('researcher')">Researcher</button>
+      <button class="rtab" id="rtEngineer"   onclick="setRole('engineer')">Engineer</button>
+      <button class="rtab" id="rtAdmin"       onclick="setRole('admin')">Admin</button>
+    </div>
+    <div class="fg"><label class="fl">User ID / Email</label><input id="emailInp" class="fi" type="text" placeholder="stevia.winata@binus.ac.id" autocomplete="username"/></div>
+    <div class="fg"><label class="fl">Password</label><input id="passInp" class="fi" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
+    <button class="btn-p" onclick="doLogin()">— Access Dashboard —</button>
+    <div id="loginErr" class="errmsg" style="display:none;">Invalid credentials. Please try again.</div>
+    <div class="lfoot">
+      Researcher: <strong>stevia.winata@binus.ac.id</strong> / <strong>drl2025</strong><br/>
+      Engineer: <strong>engineer@cityx.go.id</strong> / <strong>traffic123</strong><br/>
+      Admin: <strong>admin@binus.ac.id</strong> / <strong>admin123</strong><br/><br/>
+      ICAIFI 2025 · IEEE · DOI: 10.1109/ICAIFI66942.2025.11326250
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ DASHBOARD ═══════════════ -->
+<div id="dashScreen">
+  <div class="topbar">
+    <div class="tbl">
+      <div class="tlogo"><svg viewBox="0 0 24 24" fill="#0B0F1A"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14l-4-4 1.41-1.41L11 13.17l6.59-6.59L19 8l-8 8z"/></svg></div>
+      <span class="ttitle">DRL TRAFFIC CTRL — CITY X</span>
+      <span class="rpill" id="rolePill">RESEARCHER</span>
+    </div>
+    <div class="tbr">
+      <div class="upill"><div class="uav" id="uavEl">SW</div><span id="unameEl">Stevia W.</span></div>
+      <button class="btn-lo" onclick="askLogout()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="dbody">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="ssec">Overview</div>
+      <button class="sitem on" id="sb0" onclick="showPage(0)"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Dashboard</button>
+      <button class="sitem"    id="sb1" onclick="showPage(1)"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 5h-2v6h2V7zm0 8h-2v2h2v-2z"/></svg>Results & Metrics</button>
+      <button class="sitem"    id="sb2" onclick="showPage(2)"><svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>Simulation Flow</button>
+      <div class="ssec">Research</div>
+      <button class="sitem"    id="sb3" onclick="showPage(3)"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>Research Gap</button>
+      <button class="sitem"    id="sb4" onclick="showPage(4)"><svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>DQN Model</button>
+      <button class="sitem"    id="sb5" onclick="showPage(5)"><svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>References</button>
+      <div class="ssec">System</div>
+      <button class="sitem"    id="sb6" onclick="showPage(6)"><svg viewBox="0 0 24 24"><path d="M9 17l3-2.94c-.39-.04-.68-.06-1-.06-2.67 0-8 1.34-8 4v2h9l-3-3zm2-5c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z"/></svg>Profile</button>
+      <button class="sitem"    id="sb7" onclick="showPage(7)"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>Settings</button>
+    </div>
+
+    <!-- PAGES -->
+    <div class="main" id="mainArea">
+
+      <!-- ── PAGE 0: DASHBOARD ── -->
+      <div id="pg0" class="pg">
+        <p class="pgh" id="welcomeMsg">Good morning, Stevia</p>
+        <p class="pgs">DRL Traffic Signal Optimization · City X (Pontianak, West Kalimantan) · ICAIFI 2025</p>
+        <div class="g4">
+          <div class="scrd">
+            <p class="slbl">Avg Delay — DRL</p>
+            <p class="sval" style="color:var(--brand)">82.8<span style="font-size:14px;color:var(--t2)">s</span></p>
+            <p class="sdlt">▼ 28% vs Fixed-Time</p>
+          </div>
+          <div class="scrd">
+            <p class="slbl">Avg Delay — Fixed</p>
+            <p class="sval" style="color:var(--red)">115.0<span style="font-size:14px;color:var(--t2)">s</span></p>
+            <p class="sdlt bad">Baseline</p>
+          </div>
+          <div class="scrd">
+            <p class="slbl">Throughput — DRL</p>
+            <p class="sval" style="color:var(--brand)">1,829<span style="font-size:13px;color:var(--t2)">v/h</span></p>
+            <p class="sdlt">▲ 18% improvement</p>
+          </div>
+          <div class="scrd">
+            <p class="slbl">Max Queue — DRL</p>
+            <p class="sval" style="color:var(--accent)">35.75<span style="font-size:13px;color:var(--t2)">veh</span></p>
+            <p class="sdlt">▼ 35% vs Fixed-Time</p>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <p class="cardh">Performance Comparison</p>
+            <div class="cmp-wrap">
+              <div class="cmp-row">
+                <div class="cmp-labels"><span>Average Delay Time (seconds)</span><span style="color:var(--t1)">Lower is better</span></div>
+                <div style="margin-bottom:6px;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                    <span style="font-size:10px;color:var(--t2);width:55px;font-family:var(--fh)">FIXED</span>
+                    <div class="cmp-bar-bg" style="flex:1"><div class="cmp-bar" style="width:100%;background:var(--red)"></div></div>
+                    <span style="font-size:11px;color:var(--red);width:36px;text-align:right;font-family:var(--fh)">115s</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:10px;color:var(--t2);width:55px;font-family:var(--fh)">DRL</span>
+                    <div class="cmp-bar-bg" style="flex:1"><div class="cmp-bar" style="width:72%;background:var(--brand)"></div></div>
+                    <span style="font-size:11px;color:var(--brand);width:36px;text-align:right;font-family:var(--fh)">82.8s</span>
+                  </div>
+                </div>
+              </div>
+              <div class="cmp-row">
+                <div class="cmp-labels"><span>Max Queue Length (vehicles)</span><span style="color:var(--t1)">Lower is better</span></div>
+                <div style="margin-bottom:6px;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                    <span style="font-size:10px;color:var(--t2);width:55px;font-family:var(--fh)">FIXED</span>
+                    <div class="cmp-bar-bg" style="flex:1"><div class="cmp-bar" style="width:100%;background:var(--red)"></div></div>
+                    <span style="font-size:11px;color:var(--red);width:36px;text-align:right;font-family:var(--fh)">55</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:10px;color:var(--t2);width:55px;font-family:var(--fh)">DRL</span>
+                    <div class="cmp-bar-bg" style="flex:1"><div class="cmp-bar" style="width:65%;background:var(--brand)"></div></div>
+                    <span style="font-size:11px;color:var(--brand);width:36px;text-align:right;font-family:var(--fh)">35.75</span>
+                  </div>
+                </div>
+              </div>
+              <div class="cmp-row">
+                <div class="cmp-labels"><span>Vehicle Throughput (v/hour)</span><span style="color:var(--t1)">Higher is better</span></div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                    <span style="font-size:10px;color:var(--t2);width:55px;font-family:var(--fh)">FIXED</span>
+                    <div class="cmp-bar-bg" style="flex:1"><div class="cmp-bar" style="width:85%;background:var(--red)"></div></div>
+                    <span style="font-size:11px;color:var(--red);width:40px;text-align:right;font-family:var(--fh)">1,550</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:10px;color:var(--t2);width:55px;font-family:var(--fh)">DRL</span>
+                    <div class="cmp-bar-bg" style="flex:1"><div class="cmp-bar" style="width:100%;background:var(--brand)"></div></div>
+                    <span style="font-size:11px;color:var(--brand);width:40px;text-align:right;font-family:var(--fh)">1,829</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <p class="cardh">Study Overview</p>
+            <div class="trow"><span class="label">Study Location</span><span>City X — Pontianak, W. Kalimantan</span></div>
+            <div class="trow"><span class="label">Key Intersection</span><span>Kapuas Bridge (Jembatan Kapuas I)</span></div>
+            <div class="trow"><span class="label">Algorithm</span><span><span class="badge bg">DQN</span></span></div>
+            <div class="trow"><span class="label">Simulation Platform</span><span>CityFlow / SUMO</span></div>
+            <div class="trow"><span class="label">Delay Reduction</span><span><span class="badge bg">28%</span></span></div>
+            <div class="trow"><span class="label">Queue Reduction</span><span><span class="badge ba">35%</span></span></div>
+            <div class="trow"><span class="label">Throughput Gain</span><span><span class="badge bg">+18%</span></span></div>
+            <div class="trow"><span class="label">Published</span><span>ICAIFI 2025 · IEEE</span></div>
+            <div class="trow"><span class="label">Authors</span><span>Winata S.R., Sfenrianto</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PAGE 1: RESULTS & METRICS ── -->
+      <div id="pg1" class="pg">
+        <p class="pgh">Results &amp; Metrics</p>
+        <p class="pgs">Quantitative comparison of DRL vs Fixed-Time traffic signal control from Table 1 of the paper.</p>
+        <div class="card" style="margin-bottom:14px;padding:0;overflow:hidden;">
+          <table class="param-table">
+            <thead><tr><th>Method</th><th>Avg Delay Time (s)</th><th>Max Queue Length (veh)</th><th>Throughput (veh/hr)</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="badge br">Fixed-Time</span></td>
+                <td style="color:var(--red);font-family:var(--fh);font-weight:700">115.0</td>
+                <td style="color:var(--red);font-family:var(--fh);font-weight:700">55.0</td>
+                <td style="color:var(--red);font-family:var(--fh);font-weight:700">1,550</td>
+                <td><span class="badge br">Baseline</span></td>
+              </tr>
+              <tr>
+                <td><span class="badge bg">DRL (DQN)</span></td>
+                <td style="color:var(--brand);font-family:var(--fh);font-weight:700">82.8</td>
+                <td style="color:var(--brand);font-family:var(--fh);font-weight:700">35.75</td>
+                <td style="color:var(--brand);font-family:var(--fh);font-weight:700">1,829</td>
+                <td><span class="badge bg">Optimized</span></td>
+              </tr>
+              <tr style="background:var(--bg3)">
+                <td style="color:var(--t2);font-size:11px">Improvement</td>
+                <td style="color:var(--brand);font-family:var(--fh)">▼ 28.0%</td>
+                <td style="color:var(--brand);font-family:var(--fh)">▼ 35.0%</td>
+                <td style="color:var(--brand);font-family:var(--fh)">▲ 18.0%</td>
+                <td>—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="g3">
+          <div class="card">
+            <p class="cardh">Delay Reduction</p>
+            <p style="font-family:var(--fh);font-size:32px;font-weight:700;color:var(--brand)">28%</p>
+            <p style="font-size:12px;color:var(--t2);margin-top:6px;line-height:1.6">Average wait time dropped from <strong style="color:var(--t1)">115s</strong> to <strong style="color:var(--brand)">82.8s</strong> per vehicle at the intersection.</p>
+          </div>
+          <div class="card">
+            <p class="cardh">Queue Reduction</p>
+            <p style="font-family:var(--fh);font-size:32px;font-weight:700;color:var(--accent)">35%</p>
+            <p style="font-size:12px;color:var(--t2);margin-top:6px;line-height:1.6">Max queue dropped from <strong style="color:var(--t1)">55 vehicles</strong> to <strong style="color:var(--accent)">35.75 vehicles</strong>, reducing Kapuas Bridge backlog.</p>
+          </div>
+          <div class="card">
+            <p class="cardh">Throughput Gain</p>
+            <p style="font-family:var(--fh);font-size:32px;font-weight:700;color:var(--blue)">+279</p>
+            <p style="font-size:12px;color:var(--t2);margin-top:6px;line-height:1.6">DRL handled <strong style="color:var(--t1)">1,829 vehicles/hr</strong> vs <strong style="color:var(--red)">1,550</strong> for Fixed-Time — an extra 279 vehicles per hour.</p>
+          </div>
+        </div>
+        <div class="card">
+          <p class="cardh">Live Simulation Monitor (Simulated)</p>
+          <div class="monitor-grid">
+            <div class="monitor-card">
+              <p class="monitor-h">Current Signal Phases — DRL Agent</p>
+              <div class="phase-lights" id="phaseLights">
+                <div class="phase-light ph-green">N</div>
+                <div class="phase-light ph-red">S</div>
+                <div class="phase-light ph-red">E</div>
+                <div class="phase-light ph-red">W</div>
+              </div>
+              <p style="font-size:10px;color:var(--t3);margin-top:10px;font-family:var(--fh)" id="phaseLabel">Phase: NORTH GREEN · Timer: <span id="phTimer">12</span>s</p>
+            </div>
+            <div class="monitor-card">
+              <p class="monitor-h">Real-Time Queue (Simulated)</p>
+              <p class="metric-live" id="liveQueue">18</p>
+              <p class="metric-unit">vehicles queued</p>
+              <div class="progress-bar"><div class="progress-fill" id="queueBar" style="width:33%"></div></div>
+              <p style="font-size:10px;color:var(--t3);margin-top:6px;font-family:var(--fh)">Max observed: 35.75 vehicles</p>
+            </div>
+            <div class="monitor-card">
+              <p class="monitor-h">Current Delay (Simulated)</p>
+              <p class="metric-live" id="liveDelay">84</p>
+              <p class="metric-unit">seconds avg delay</p>
+              <div class="progress-bar"><div class="progress-fill" id="delayBar" style="width:73%;background:var(--accent)"></div></div>
+              <p style="font-size:10px;color:var(--t3);margin-top:6px;font-family:var(--fh)">Target: &lt;82.8s</p>
+            </div>
+            <div class="monitor-card">
+              <p class="monitor-h">Hourly Throughput (Simulated)</p>
+              <p class="metric-live" id="liveThroughput">1,812</p>
+              <p class="metric-unit">vehicles / hour</p>
+              <div class="progress-bar"><div class="progress-fill" id="throughputBar" style="width:99%"></div></div>
+              <p style="font-size:10px;color:var(--t3);margin-top:6px;font-family:var(--fh)">Target: 1,829 vehicles/hr</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PAGE 2: SIMULATION FLOW ── -->
+      <div id="pg2" class="pg">
+        <p class="pgh">Simulation Flow</p>
+        <p class="pgs">Three-phase methodology used to design, train, and evaluate the DRL traffic signal controller (Figure 1 from paper).</p>
+        <div class="flow-grid">
+          <div class="flow-phase">
+            <p class="flow-phase-h">⬡ Phase 1 — Setup &amp; Calibration</p>
+            <div class="flow-steps">
+              <div class="flow-step"><p class="fsh">STEP 1</p>Field survey at critical intersections in City X to collect real-world traffic data.</div>
+              <div class="flow-step"><p class="fsh">STEP 2</p>Collect vehicle volume, composition (cars &amp; motorcycles), movement patterns, signal timings.</div>
+              <div class="flow-step"><p class="fsh">STEP 3</p>Build and calibrate a digital twin using CityFlow / SUMO simulation platform.</div>
+            </div>
+          </div>
+          <div class="flow-phase">
+            <p class="flow-phase-h">⬡ Phase 2 — DRL Agent Training Loop</p>
+            <div class="flow-steps">
+              <div class="flow-step"><p class="fsh">OBSERVE (State)</p>DQN agent reads queue lengths and vehicle waiting times per lane as state input.</div>
+              <div class="flow-step"><p class="fsh">ACTION</p>Neural network outputs a decision: select next green light phase (e.g., "Phase A → Lane N").</div>
+              <div class="flow-step"><p class="fsh">REWARD</p>Positive reward if waiting time decreases. Negative penalty if congestion worsens.</div>
+              <div class="flow-step"><p class="fsh">LEARN (Update)</p>Reward updates Q-network weights via backpropagation. Repeat millions of iterations.</div>
+            </div>
+          </div>
+          <div class="flow-phase">
+            <p class="flow-phase-h">⬡ Phase 3 — Performance Evaluation</p>
+            <div class="flow-steps">
+              <div class="flow-step"><p class="fsh">TESTING</p>Trained DRL agent tested against Fixed-Time system under identical traffic conditions.</div>
+              <div class="flow-step"><p class="fsh">METRICS</p>Average delay time, max queue length, vehicle throughput measured and compared.</div>
+              <div class="flow-step"><p class="fsh">RESULT</p>DRL: 82.8s delay · 35.75 queue · 1,829 veh/hr vs Fixed: 115s · 55 queue · 1,550 veh/hr.</div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <p class="cardh">RL Core Components</p>
+          <div class="g3">
+            <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rmd);padding:14px;">
+              <p style="font-family:var(--fh);font-size:11px;color:var(--brand);margin-bottom:8px;">STATE</p>
+              <p style="font-size:12px;color:var(--t2);line-height:1.7;">Queue lengths per lane, total vehicle waiting times, current signal phase, time elapsed in phase.</p>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rmd);padding:14px;">
+              <p style="font-family:var(--fh);font-size:11px;color:var(--accent);margin-bottom:8px;">ACTION</p>
+              <p style="font-size:12px;color:var(--t2);line-height:1.7;">Select next green light phase from available signal phases. E.g., keep current phase or switch to next.</p>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rmd);padding:14px;">
+              <p style="font-family:var(--fh);font-size:11px;color:var(--blue);margin-bottom:8px;">REWARD</p>
+              <p style="font-size:12px;color:var(--t2);line-height:1.7;">Negative of total vehicle waiting time. Agent maximizes reward = minimizes cumulative delays.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PAGE 3: RESEARCH GAP ── -->
+      <div id="pg3" class="pg">
+        <p class="pgh">Research Gap</p>
+        <p class="pgs">Motivation and identified gap from the paper — why DRL was needed specifically for City X.</p>
+        <div class="gap-cards" style="margin-bottom:14px;">
+          <div class="gap-card">
+            <h4>The Problem — City X</h4>
+            <p>Severe traffic congestion at Kapuas Bridge (Jembatan Kapuas I) during morning and evening peak hours in Pontianak, West Kalimantan. Traditional fixed-time signal systems fail to adapt to dynamic traffic flows.</p>
+          </div>
+          <div class="gap-card">
+            <h4>Fixed-Time Limitations</h4>
+            <p>Fixed-time systems rely on static schedules from outdated surveys. They cannot adapt to urban growth or changing mobility patterns. They perform poorly during traffic variations.</p>
+          </div>
+          <div class="gap-card">
+            <h4>Actuated Systems Fail Too</h4>
+            <p>Actuated controllers optimize only locally without anticipating network-wide traffic flow, often shifting congestion to adjacent intersections rather than resolving it.</p>
+          </div>
+          <div class="gap-card">
+            <h4>ATCS Limitations in Indonesia</h4>
+            <p>Area Traffic Control Systems (Bandung, Semarang) use predefined timing plans, respond slowly to incidents, and struggle with Indonesia's heterogeneous motorcycle-heavy traffic.</p>
+          </div>
+          <div class="gap-card">
+            <h4>DRL Research Gap</h4>
+            <p>While DRL was proven in Yogyakarta (DDQN — Gadjah Mada University), no study had applied it to City X with its unique Kapuas Bridge congestion and motorcycle-dominant traffic.</p>
+          </div>
+          <div class="gap-card">
+            <h4>Why DRL for City X</h4>
+            <p>DRL integrates deep neural networks to handle high-dimensional states (traffic camera images, multi-lane queues), enabling real-time adaptive signal control at complex Indonesian intersections.</p>
+          </div>
+        </div>
+        <div class="card">
+          <p class="cardh">Prior Indonesia Traffic Studies</p>
+          <div class="trow"><span class="label">Yogyakarta (Gadjah Mada Univ.)</span><span><span class="badge bg">DDQN</span> Reduced queues vs fixed-time. Limited scope, not City X.</span></div>
+          <div class="trow"><span class="label">Denpasar / Bali</span><span><span class="badge ba">Vissim</span> Signal optimization — no RL used.</span></div>
+          <div class="trow"><span class="label">University of Indonesia</span><span><span class="badge bb">Camera-based</span> Adaptive system, no reinforcement learning.</span></div>
+          <div class="trow"><span class="label">Bandung / Semarang</span><span><span class="badge br">ATCS</span> Predefined plans, not AI-driven.</span></div>
+          <div class="trow"><span class="label">City X (Pontianak)</span><span><span class="badge bg">THIS STUDY</span> First DRL application to City X traffic.</span></div>
+        </div>
+      </div>
+
+      <!-- ── PAGE 4: DQN MODEL ── -->
+      <div id="pg4" class="pg">
+        <p class="pgh">DQN Model Architecture</p>
+        <p class="pgs">Deep Q-Network algorithm parameters, design choices, and training configuration used in the study.</p>
+        <div class="g2" style="margin-bottom:14px;">
+          <div class="card" style="padding:0;overflow:hidden;">
+            <table class="param-table">
+              <thead><tr><th>Parameter</th><th>Value / Description</th></tr></thead>
+              <tbody>
+                <tr><td>Algorithm</td><td><span class="badge bg">Deep Q-Network (DQN)</span></td></tr>
+                <tr><td>State Representation</td><td>Queue lengths per lane + vehicle waiting times</td></tr>
+                <tr><td>Action Space</td><td>Select next green light phase</td></tr>
+                <tr><td>Reward Function</td><td>Negative total vehicle waiting time (minimize delays)</td></tr>
+                <tr><td>Neural Network</td><td>Deep neural network for Q-value approximation</td></tr>
+                <tr><td>Simulation Platform</td><td>CityFlow (primary) / SUMO (compatible)</td></tr>
+                <tr><td>Integration API</td><td>TraCI (Traffic Control Interface)</td></tr>
+                <tr><td>Training Method</td><td>Trial-and-error via simulation interactions</td></tr>
+                <tr><td>Variants Considered</td><td>Double DQN, Dueling DQN</td></tr>
+                <tr><td>Target Metric</td><td>Minimize avg delay, queue length; maximize throughput</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="card">
+              <p class="cardh">Why DQN over Q-Learning?</p>
+              <p style="font-size:12px;color:var(--t2);line-height:1.7;">Classic Q-learning stores Q-values in a table — impractical for City X's complex intersection with many possible states ("curse of dimensionality"). DQN uses a neural network to approximate Q-values, making it scalable to large state spaces like multi-lane traffic conditions.</p>
+            </div>
+            <div class="card">
+              <p class="cardh">Scalability</p>
+              <p style="font-size:12px;color:var(--t2);line-height:1.7;">The DRL framework trained on City X can be adapted for other Indonesian cities (Jakarta, Surabaya) by retraining with local traffic data. It is compatible with smart city platforms and can integrate with public transport and emergency management systems.</p>
+            </div>
+            <div class="card">
+              <p class="cardh">Environmental Benefits</p>
+              <p style="font-size:12px;color:var(--t2);line-height:1.7;">Reduced vehicle waiting times lower fuel consumption and CO₂ emissions by up to <strong style="color:var(--brand)">25%</strong> (Wei et al., 2019). Relevant given rising urban air pollution across Indonesian cities.</p>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <p class="cardh">Challenges &amp; Limitations</p>
+          <div class="g3">
+            <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rmd);padding:14px;">
+              <p style="font-family:var(--fh);font-size:10px;color:var(--red);margin-bottom:7px;text-transform:uppercase;">Data Availability</p>
+              <p style="font-size:12px;color:var(--t2);line-height:1.7;">Real-time traffic data in City X may be limited. Complex sensor infrastructure (loop detectors, cameras) required for full implementation.</p>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rmd);padding:14px;">
+              <p style="font-family:var(--fh);font-size:10px;color:var(--accent);margin-bottom:7px;text-transform:uppercase;">Motorcycle Traffic</p>
+              <p style="font-size:12px;color:var(--t2);line-height:1.7;">Indonesia's two-wheeled vehicle dominance and irregular driver behaviors require tailored state representations with motorcycles as a separate feature class.</p>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rmd);padding:14px;">
+              <p style="font-family:var(--fh);font-size:10px;color:var(--blue);margin-bottom:7px;text-transform:uppercase;">Sim-to-Real Gap</p>
+              <p style="font-size:12px;color:var(--t2);line-height:1.7;">Simulation performance may differ in real-world deployment due to unforeseen factors. Continual model retraining needed as traffic patterns evolve.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PAGE 5: REFERENCES ── -->
+      <div id="pg5" class="pg">
+        <p class="pgh">References</p>
+        <p class="pgs">All 24 citations from the paper — ICAIFI 2025, IEEE.</p>
+        <div class="card" style="padding:8px 14px;">
+          <div class="ref-item"><span class="ref-num">[1]</span><span class="ref-text"><em>Astarita et al.</em> "A review of traffic signal control methods based on Floating Car Data (FCD)." Procedia Comput. Sci., vol. 175, pp. 745–751, 2020.</span></div>
+          <div class="ref-item"><span class="ref-num">[2]</span><span class="ref-text"><em>Wei et al.</em> "IntelliLight: A reinforcement learning approach for intelligent traffic light control." ACM SIGKDD, pp. 2496–2505, 2018.</span></div>
+          <div class="ref-item"><span class="ref-num">[3]</span><span class="ref-text"><em>Aslani et al.</em> "Adaptive traffic signal control with actor-critic methods in a real-world traffic network." Transp. Res. Part C, vol. 85, pp. 732–752, 2017.</span></div>
+          <div class="ref-item"><span class="ref-num">[4]</span><span class="ref-text"><em>Mirchandani &amp; Head.</em> "A real-time traffic signal control system: Architecture, algorithms, and analysis." Transp. Res. Part C, vol. 9, no. 6, pp. 415–432, 2001.</span></div>
+          <div class="ref-item"><span class="ref-num">[5]</span><span class="ref-text"><em>Yau et al.</em> "A survey on Reinforcement learning models and algorithms for traffic signal control." ACM Comput. Surv., vol. 50, no. 3, 2017.</span></div>
+          <div class="ref-item"><span class="ref-num">[6]</span><span class="ref-text"><em>Morales &amp; Zaragoza.</em> "An introduction to reinforcement learning." Decision Theory Models for AI, pp. 63–80, 2011.</span></div>
+          <div class="ref-item"><span class="ref-num">[7]</span><span class="ref-text"><em>Haydari &amp; Yilmaz.</em> "Deep Reinforcement Learning for Intelligent Transportation Systems: A Survey." IEEE Trans. Intell. Transp. Syst., vol. 23, no. 1, pp. 11–32, 2022.</span></div>
+          <div class="ref-item"><span class="ref-num">[8]</span><span class="ref-text"><em>Michailidis et al.</em> "Traffic Signal Control via Reinforcement Learning: A Review on Applications and Innovations." Infrastructures, vol. 10, no. 5, pp. 1–41, 2025.</span></div>
+          <div class="ref-item"><span class="ref-num">[9]</span><span class="ref-text"><em>Suthanaya &amp; Putra.</em> "Traffic Signal Coordination Based on Vissim Software (Case Study: Sudirman Road, Denpasar, Indonesia)." E3S Web Conf., vol. 445, 2023.</span></div>
+          <div class="ref-item"><span class="ref-num">[10]</span><span class="ref-text"><em>Rachmadi et al.</em> "Adaptive traffic signal control system using camera sensor and embedded system." IEEE TENCON, pp. 1261–1265, 2011.</span></div>
+          <div class="ref-item"><span class="ref-num">[11]</span><span class="ref-text"><em>Saputra E.E.</em> "Pagi dan sore, warga Pontianak menerobos kemacetan di Jembatan Kapuas 1." Kompas.id. [Online].</span></div>
+          <div class="ref-item"><span class="ref-num">[12]</span><span class="ref-text"><em>Webster F.V.</em> "Traffic Signals Settings." Road Res. Lab. Paper No. 39, Her Majesty's Stationery Office, London, pp. 1–44, 1958.</span></div>
+          <div class="ref-item"><span class="ref-num">[13]</span><span class="ref-text"><em>Papageorgiou et al.</em> "Review of Road Traffic Control Strategies." Proc. IEEE, vol. 91, no. 12, pp. 2041–2042, 2003.</span></div>
+          <div class="ref-item"><span class="ref-num">[14]</span><span class="ref-text"><em>MKJI.</em> "Manual Kapasitas Jalan Indonesia (MKJI)." 1997.</span></div>
+          <div class="ref-item"><span class="ref-num">[15]</span><span class="ref-text"><em>Sakr et al.</em> "Intelligent Traffic Management Systems: A review." Nile J. Commun. Comput. Sci., vol. 5, no. 1, pp. 42–56, 2023.</span></div>
+          <div class="ref-item"><span class="ref-num">[16]</span><span class="ref-text"><em>Dinas Perhubungan Kota Bandung.</em> "LKIP Tahun 2022." dishub.bandung.go.id, 2022.</span></div>
+          <div class="ref-item"><span class="ref-num">[17]</span><span class="ref-text"><em>Pratomo et al.</em> "Evaluasi Kinerja APILL di Kota Semarang." G-Smart, vol. 5, no. 2, pp. 71–81, 2022.</span></div>
+          <div class="ref-item"><span class="ref-num">[18]</span><span class="ref-text"><em>Tahir et al.</em> "Transformasi Bisnis di Era Digital." 2023.</span></div>
+          <div class="ref-item"><span class="ref-num">[19]</span><span class="ref-text"><em>Noaeen et al.</em> "Reinforcement learning in urban network traffic signal control: A systematic literature review." Expert Syst. Appl., vol. 199, p. 116830, 2022.</span></div>
+          <div class="ref-item"><span class="ref-num">[20]</span><span class="ref-text"><em>Hartanto M.H.S.</em> "Optimalisasi Sinyal Lalu Lintas Menggunakan Kendali Adaptif dengan Algoritma Double Deep Q-Network." Gadjah Mada University, 2021.</span></div>
+          <div class="ref-item"><span class="ref-num">[21]</span><span class="ref-text"><em>Lopez et al.</em> "Microscopic Traffic Simulation using SUMO." IEEE ITSC 2018, pp. 2575–2582, 2018.</span></div>
+          <div class="ref-item"><span class="ref-num">[22]</span><span class="ref-text"><em>Hartono et al.</em> "Comparing the impacts of fossil and renewable energy investments in Indonesia." Heliyon, vol. 6, no. 6, p. e04120, 2020.</span></div>
+          <div class="ref-item"><span class="ref-num">[23]</span><span class="ref-text"><em>Wei, Yao, Zheng &amp; Li.</em> "IntelliLight: A Reinforcement Learning Approach for Intelligent Traffic Signal Control." 2018.</span></div>
+          <div class="ref-item"><span class="ref-num">[24]</span><span class="ref-text"><em>Widiyastuti et al.</em> "Smart Sustainable City Framework." J. PIKOM, vol. 22, no. 1, p. 13, 2021.</span></div>
+        </div>
+      </div>
+
+      <!-- ── PAGE 6: PROFILE ── -->
+      <div id="pg6" class="pg">
+        <p class="pgh">Profile</p>
+        <p class="pgs">Your account and research affiliation details.</p>
+        <div class="card" style="max-width:580px;">
+          <div class="phdr">
+            <div class="pav-big" id="profAv">SW</div>
+            <div>
+              <p class="pname" id="profName">Stevia Rossa Winata</p>
+              <p class="prole" id="profRole">Researcher · BINUS Graduate Program</p>
+            </div>
+          </div>
+          <div class="igrid">
+            <div class="iitem"><label>User ID</label><div class="ival" id="profId">RES-2025-001</div></div>
+            <div class="iitem"><label>Email</label><div class="ival" id="profEmail">stevia.winata@binus.ac.id</div></div>
+            <div class="iitem"><label>Institution</label><div class="ival">Universitas Bina Nusantara (BINUS)</div></div>
+            <div class="iitem"><label>Department</label><div class="ival">Information Systems Management</div></div>
+            <div class="iitem"><label>Research Area</label><div class="ival">Deep Reinforcement Learning · ITS</div></div>
+            <div class="iitem"><label>Supervisor</label><div class="ival">Sfenrianto</div></div>
+            <div class="iitem"><label>Published At</label><div class="ival">ICAIFI 2025 · IEEE</div></div>
+            <div class="iitem"><label>Status</label><div class="ival" style="color:var(--brand);font-weight:600;">Active</div></div>
+          </div>
+          <button class="btnsave" style="margin-top:16px;">Edit Profile</button>
+        </div>
+      </div>
+
+      <!-- ── PAGE 7: SETTINGS ── -->
+      <div id="pg7" class="pg">
+        <p class="pgh">Settings</p>
+        <p class="pgs">Configure simulation parameters, notification preferences, and system settings.</p>
+        <div style="max-width:580px;display:flex;flex-direction:column;gap:14px;">
+          <div class="card">
+            <p class="sech">Simulation Parameters</p>
+            <div class="srow"><div><p class="slb">Auto-update live metrics</p><p class="ssb">Refresh simulation monitor every 2 seconds</p></div><button class="tog on" onclick="this.classList.toggle('on')"></button></div>
+            <div class="srow"><div><p class="slb">DRL agent active</p><p class="ssb">Enable DQN controller in simulation</p></div><button class="tog on" onclick="this.classList.toggle('on')"></button></div>
+            <div class="srow"><div><p class="slb">Compare with Fixed-Time</p><p class="ssb">Show side-by-side comparison in metrics</p></div><button class="tog on" onclick="this.classList.toggle('on')"></button></div>
+            <div class="srow"><div><p class="slb">Motorcycle feature enabled</p><p class="ssb">Separate state representation for 2-wheelers</p></div><button class="tog" onclick="this.classList.toggle('on')"></button></div>
+          </div>
+          <div class="card">
+            <p class="sech">Simulation Platform</p>
+            <div class="srow"><span>Platform</span><select class="icfg"><option>CityFlow</option><option>SUMO</option><option>PTV Vissim</option></select></div>
+            <div class="srow"><span>DQN Variant</span><select class="icfg"><option>DQN</option><option>Double DQN</option><option>Dueling DQN</option></select></div>
+            <div class="srow"><span>Training Episodes</span><input class="icfg" type="number" value="1000" min="100"/></div>
+          </div>
+          <div class="card">
+            <p class="sech">Notifications</p>
+            <div class="srow"><span>Alert on training convergence</span><button class="tog on" onclick="this.classList.toggle('on')"></button></div>
+            <div class="srow"><span>Email report after evaluation</span><button class="tog on" onclick="this.classList.toggle('on')"></button></div>
+            <div class="srow"><span>Real-time congestion alerts</span><button class="tog" onclick="this.classList.toggle('on')"></button></div>
+          </div>
+          <div class="card">
+            <p class="sech">Security</p>
+            <div class="srow"><span>Two-factor authentication</span><button class="tog" onclick="this.classList.toggle('on')"></button></div>
+            <div class="srow"><span>Auto logout after 30 minutes</span><button class="tog on" onclick="this.classList.toggle('on')"></button></div>
+            <div class="srow"><span style="color:var(--red);cursor:pointer" onclick="askLogout()">Sign out of all sessions</span><span style="font-size:11px;color:var(--t3)">Last login: Today</span></div>
+          </div>
+          <div class="card">
+            <p class="sech" id="saveBarWrap"></p>
+            <button class="btnsave" onclick="saveSettings()">Save Settings</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /mainArea -->
+  </div><!-- /dbody -->
+</div><!-- /dashScreen -->
+
+<!-- LOGOUT MODAL -->
+<div id="loModal">
+  <div class="locard">
+    <div class="loico"><svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg></div>
+    <h3>Sign out?</h3>
+    <p>You'll be returned to the login screen. All unsaved simulation data will be lost.</p>
+    <div class="mbtns">
+      <button class="btncancel" onclick="closeModal()">Cancel</button>
+      <button class="btnconfirm" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── AUTH ──────────────────────────────────────────────────
+var ROLE = 'researcher';
+var USERS = {
+  researcher:{id:'stevia.winata@binus.ac.id', pw:'drl2025',    name:'Stevia Rossa Winata', short:'Stevia W.', av:'SW', label:'RESEARCHER', email:'stevia.winata@binus.ac.id', uid:'RES-2025-001', role:'Researcher · BINUS Graduate Program'},
+  engineer:  {id:'engineer@cityx.go.id',      pw:'traffic123', name:'Traffic Engineer',    short:'T. Eng.',   av:'TE', label:'ENGINEER',   email:'engineer@cityx.go.id',      uid:'ENG-2025-002', role:'Traffic Engineer · City X Transportation Dept.'},
+  admin:     {id:'admin@binus.ac.id',          pw:'admin123',   name:'System Admin',        short:'Admin',     av:'AD', label:'ADMIN',      email:'admin@binus.ac.id',         uid:'ADM-2025-001', role:'System Administrator · BINUS University'}
+};
+
+function setRole(role) {
+  ROLE = role;
+  ['researcher','engineer','admin'].forEach(function(r){
+    var id = 'rt'+r.charAt(0).toUpperCase()+r.slice(1);
+    document.getElementById(id).classList.remove('on');
+  });
+  document.getElementById('rt'+role.charAt(0).toUpperCase()+role.slice(1)).classList.add('on');
+  var ph = {researcher:'stevia.winata@binus.ac.id', engineer:'engineer@cityx.go.id', admin:'admin@binus.ac.id'};
+  document.getElementById('emailInp').placeholder = ph[role];
+}
+
+function doLogin() {
+  var email = document.getElementById('emailInp').value.trim();
+  var pw    = document.getElementById('passInp').value;
+  var u     = USERS[ROLE];
+  var err   = document.getElementById('loginErr');
+  if (email === u.id && pw === u.pw) {
+    err.style.display = 'none';
+    document.getElementById('uavEl').textContent    = u.av;
+    document.getElementById('unameEl').textContent  = u.short;
+    document.getElementById('rolePill').textContent = u.label;
+    document.getElementById('profAv').textContent   = u.av;
+    document.getElementById('profName').textContent = u.name;
+    document.getElementById('profRole').textContent = u.role;
+    document.getElementById('profId').textContent   = u.uid;
+    document.getElementById('profEmail').textContent= u.email;
+    var h = new Date().getHours();
+    var g = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+    document.getElementById('welcomeMsg').textContent = g + ', ' + u.name.split(' ')[0];
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashScreen').style.display  = 'flex';
+    showPage(0);
+    startLiveMonitor();
+  } else {
+    err.style.display = 'block';
+  }
+}
+
+document.getElementById('passInp').addEventListener('keydown',  function(e){ if(e.key==='Enter') doLogin(); });
+document.getElementById('emailInp').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+window.onload = function() { document.getElementById('loginScreen').style.display = 'flex'; };
+
+// ── NAVIGATION ────────────────────────────────────────────
+function showPage(n) {
+  for (var i = 0; i < 8; i++) {
+    document.getElementById('pg'+i).style.display = 'none';
+    document.getElementById('sb'+i).classList.remove('on');
+  }
+  document.getElementById('pg'+n).style.display = 'block';
+  document.getElementById('sb'+n).classList.add('on');
+  document.getElementById('mainArea').scrollTop = 0;
+}
+
+// ── LIVE MONITOR SIMULATION ───────────────────────────────
+var monitorInterval = null;
+var phaseIndex = 0;
+var phaseTimer = 15;
+var phases = [
+  {dir:'NORTH', lights:['ph-green','ph-red','ph-red','ph-red']},
+  {dir:'SOUTH', lights:['ph-red','ph-green','ph-red','ph-red']},
+  {dir:'EAST',  lights:['ph-red','ph-red','ph-green','ph-red']},
+  {dir:'WEST',  lights:['ph-red','ph-red','ph-red','ph-green']}
+];
+var dirs = ['N','S','E','W'];
+
+function startLiveMonitor() {
+  if (monitorInterval) clearInterval(monitorInterval);
+  monitorInterval = setInterval(function(){
+    // phase timer
+    phaseTimer--;
+    if (phaseTimer <= 0) { phaseIndex = (phaseIndex+1)%4; phaseTimer = 10+Math.floor(Math.random()*10); }
+    var ph = phases[phaseIndex];
+    var lights = document.querySelectorAll('.phase-light');
+    for (var i=0;i<lights.length;i++) {
+      lights[i].className = 'phase-light ' + ph.lights[i];
+      lights[i].textContent = dirs[i];
+    }
+    var pl = document.getElementById('phaseLabel');
+    if (pl) pl.innerHTML = 'Phase: '+ph.dir+' GREEN &middot; Timer: <span id="phTimer">'+phaseTimer+'</span>s';
+
+    // metrics fluctuation
+    var q = Math.round(20 + Math.random()*20);
+    var d = Math.round(78 + Math.random()*15);
+    var t = Math.round(1750 + Math.random()*120);
+    var lq = document.getElementById('liveQueue');
+    var ld = document.getElementById('liveDelay');
+    var lt = document.getElementById('liveThroughput');
+    var qb = document.getElementById('queueBar');
+    var db = document.getElementById('delayBar');
+    var tb = document.getElementById('throughputBar');
+    if(lq) lq.textContent = q;
+    if(ld) ld.textContent = d;
+    if(lt) lt.textContent = t.toLocaleString();
+    if(qb) qb.style.width = Math.min(100, Math.round(q/55*100))+'%';
+    if(db) db.style.width = Math.min(100, Math.round(d/115*100))+'%';
+    if(tb) tb.style.width = Math.min(100, Math.round(t/1829*100))+'%';
+  }, 2000);
+}
+
+// ── SETTINGS SAVE ─────────────────────────────────────────
+function saveSettings() {
+  var w = document.getElementById('saveBarWrap');
+  w.innerHTML = '<div class="savebar ok"><div class="sdotg"></div>Settings saved successfully &middot; '+new Date().toLocaleTimeString()+'</div>';
+  setTimeout(function(){ w.innerHTML = ''; }, 3500);
+}
+
+// ── LOGOUT ────────────────────────────────────────────────
+function askLogout()  { document.getElementById('loModal').style.display = 'flex'; }
+function closeModal() { document.getElementById('loModal').style.display = 'none'; }
+function doLogout() {
+  closeModal();
+  if (monitorInterval) { clearInterval(monitorInterval); monitorInterval = null; }
+  document.getElementById('emailInp').value = '';
+  document.getElementById('passInp').value  = '';
+  document.getElementById('loginErr').style.display = 'none';
+  document.getElementById('dashScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+</script>
+</body>
+</html>
